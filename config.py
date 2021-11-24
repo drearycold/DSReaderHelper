@@ -25,6 +25,7 @@ except ImportError:
                           QTableWidget, QHBoxLayout, QSpinBox)
 
 from calibre.utils.config import JSONConfig
+from calibre.srv.opts import server_config
 
 try:
     load_translations()
@@ -47,9 +48,14 @@ PLUGIN_ICONS = [
 KEY_SCHEMA_VERSION = 'SchemaVersion'
 DEFAULT_SCHEMA_VERSION = 0.1
 
+DEFAULT_STORE_VALUES = {
+                        KEY_SERVICE_PORT: server_config().port + 1,
+                        KEY_GOODREADS_SYNC_ENABLED: True,
+                        }
 
 # This is where all preferences for this plugin will be stored
 plugin_prefs = JSONConfig('plugins/DSReader Helper')
+plugin_prefs.defaults[STORE_NAME] = DEFAULT_STORE_VALUES
 
 
 class ConfigWidget(QWidget):
@@ -102,12 +108,8 @@ class ServiceTab(QWidget):
         service_group_box_layout.addWidget(self.port_spinbox, 0, 1, 1, 2)
         service_group_box_layout.addWidget(self.port_label_note, 1, 1, 1, 2)
 
-        if KEY_SERVICE_PORT in c:
-            self.port_spinbox.setValue(c[KEY_SERVICE_PORT])
-        else:
-            from calibre.srv.opts import server_config
-            self.port_spinbox.setValue(server_config().port + 1)
-
+        self.port_spinbox.setValue(c[KEY_SERVICE_PORT])
+        
         self.goodreads_sync_enabled_checkbox = QCheckBox(_('Enable Goodreads Sync'), self)
         self.goodreads_sync_enabled_checkbox.setToolTip(_('Enable automatically updating reading progress to Goodreads account.'))
         self.goodreads_sync_enabled_checkbox.setChecked(c.get(KEY_GOODREADS_SYNC_ENABLED, True))

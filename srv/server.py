@@ -59,10 +59,8 @@ class Server:
         opts = copy.copy(server_config())
 
         from calibre_plugins.dsreader_helper.config import plugin_prefs, STORE_NAME, KEY_SERVICE_PORT
-        if KEY_SERVICE_PORT in plugin_prefs[STORE_NAME]:
-            opts.port = plugin_prefs[STORE_NAME][KEY_SERVICE_PORT]
-        else:
-            opts.port += 1
+        opts.port = plugin_prefs[STORE_NAME].get(KEY_SERVICE_PORT, opts.port+1)
+        print("service port %d" % opts.port)
         lp, lap = log_paths()
         try:
             os.makedirs(cache_dir())

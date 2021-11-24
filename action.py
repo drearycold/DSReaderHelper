@@ -29,9 +29,9 @@ class DSReaderHelperAction(InterfaceAction):
     # Create our top-level menu/toolbar action (text, icon_path, tooltip, keyboard shortcut)
     action_spec = ('DSReader Helper', None, _('Helper Plugin for D.S.Reader iOS App\n'
                                           'to automate various refreshing actions'), ())
-    popup_type = QToolButton.MenuButtonPopup
+    # popup_type = QToolButton.MenuButtonPopup
     action_type = 'current'
-    dont_add_to = frozenset(['context-menu-device'])
+    # dont_add_to = frozenset(['context-menu-device'])
 
     def genesis(self):
         self.menu = QMenu(self.gui)
@@ -50,13 +50,13 @@ class DSReaderHelperAction(InterfaceAction):
         # Used to store callback details when called from another plugin.
         self.plugin_callback = None
 
-        from calibre.srv.opts import server_config
-        import copy
-        opts = copy.copy(server_config())
-        opts.port += 1
-        print('server_config %s' % str(opts))
-        print('port %s' % str(opts.port))
-        print('library_broker %s' % str(self.gui.library_broker))
+        # from calibre.srv.opts import server_config
+        # import copy
+        # opts = copy.copy(server_config())
+        # opts.port += 1
+        # print('server_config %s' % str(opts))
+        # print('port %s' % str(opts.port))
+        # print('library_broker %s' % str(self.gui.library_broker))
         
         # from calibre.srv.handler import Handler
         # handler = Handler(self.gui.library_broker, opts)
