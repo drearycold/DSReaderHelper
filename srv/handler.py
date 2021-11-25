@@ -183,7 +183,7 @@ class Context:
             return old[1]
 
 
-SRV_MODULES = ('dsreader_helper', 'goodreads_sync')
+SRV_MODULES = ('dsreader_helper', 'goodreads_sync', 'count_pages')
 
 class Handler:
 
