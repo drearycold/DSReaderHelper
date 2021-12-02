@@ -87,14 +87,14 @@ class ServiceTab(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
+        c = plugin_prefs[STORE_NAME]
+        
         service_group_box = QGroupBox(_('Service options:'), self)
         layout.addWidget(service_group_box)
         service_group_box_layout = QGridLayout()
         service_group_box.setLayout(service_group_box_layout)
 
-        c = plugin_prefs[STORE_NAME]
-
-        self.port_label = QLabel(_('&Port:'), self)
+        self.port_label = QLabel(_('Service &Port:'), self)
         self.port_label_note = QLabel(_('Please restart calibre to make new settings take effect'), self)
         toolTip = _('Listening port, defaults to content server port number + 1')
         self.port_label.setToolTip(toolTip)
@@ -115,3 +115,27 @@ class ServiceTab(QWidget):
         self.goodreads_sync_enabled_checkbox.setChecked(c.get(KEY_GOODREADS_SYNC_ENABLED, True))
 
         service_group_box_layout.addWidget(self.goodreads_sync_enabled_checkbox, 2, 0, 1, 3)
+
+        # ----------
+        position_column_box = QGroupBox(_('Reading Position Column options:'), self)
+        layout.addWidget(position_column_box)
+        position_column_box_layout = QGridLayout()
+        position_column_box.setLayout(position_column_box_layout)
+
+        position_column_box_layout.addWidget(QLabel(_('Column Prefix:'), self), 0, 0, 1, 1)
+        self.position_column_prefix_ledit = QLineEdit('read_pos', self)
+        position_column_box_layout.addWidget(self.position_column_prefix_ledit, 0, 1, 1, 1)
+
+        self.position_column_all_libraries_checkbox = QCheckBox(_('All Libraries'), self)
+        self.position_column_all_libraries_checkbox.setChecked(True)
+        self.position_column_all_libraries_checkbox.setToolTip(_('Add Reading Position Columns to all libraries lacking them'))
+        position_column_box_layout.addWidget(self.position_column_all_libraries_checkbox, 0, 2, 1, 1)
+
+        self.add_reading_position_column_button = QPushButton(_('Add'), self)
+        self.add_reading_position_column_button.setToolTip(_('Add Reading Position Columns'))
+        self.add_reading_position_column_button.clicked.connect(self.add_position_columns)
+        position_column_box_layout.addWidget(self.add_reading_position_column_button, 0, 3, 1, 1)
+
+    def add_position_columns(self):
+        print("add_position_columns %s %s" % (self.position_column_all_libraries_checkbox.isChecked(), self.position_column_prefix_ledit.text()))
+        pass
