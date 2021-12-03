@@ -9,7 +9,7 @@ __docformat__ = 'restructuredtext en'
 
 import six
 from six import text_type as unicode
-import json, os
+import json, os, copy
 
 try:
     from PyQt5 import QtCore
@@ -34,7 +34,7 @@ except NameError:
     pass # load_translations() added in calibre 1.9
 
 PREFS_NAMESPACE = 'DSReaderHelperPlugin'
-PREFS_KEY_SETTINGS = 'settings'
+PREFS_KEY_READING_POSITION_COLUMNS = 'readingPositionColumns'
 
 STORE_NAME = 'Options'
 
@@ -59,6 +59,12 @@ DEFAULT_STORE_VALUES = {
 plugin_prefs = JSONConfig('plugins/DSReader Helper')
 plugin_prefs.defaults[STORE_NAME] = DEFAULT_STORE_VALUES
 
+def get_library_reading_position_columns(db):
+    return db.prefs.get_namespaced(PREFS_NAMESPACE, PREFS_KEY_READING_POSITION_COLUMNS, {})
+
+def set_library_reading_position_columns(db, column_config):
+    db.prefs.set_namespaced(PREFS_NAMESPACE, PREFS_KEY_READING_POSITION_COLUMNS, column_config)
+
 class ConfigWidget(QWidget):
 
     def __init__(self, plugin_action):
@@ -77,9 +83,16 @@ class ConfigWidget(QWidget):
         new_prefs = {}
         new_prefs[KEY_SERVICE_PORT] = self.service_tab.port_spinbox.value()
         new_prefs[KEY_GOODREADS_SYNC_ENABLED] = self.service_tab.goodreads_sync_enabled_checkbox.isChecked()
-        new_prefs[KEY_READING_POSITION_COLUMNS] = self.service_tab.db_columns
 
         plugin_prefs[STORE_NAME] = new_prefs
+
+        for library_name in self.service_tab.db_columns:
+            library_path = self.service_tab.db_columns[library_name]['library_path']
+            column_config = self.service_tab.db_columns[library_name]['user_names']
+            from calibre.db.legacy import LibraryDatabase
+            db = LibraryDatabase(library_path, read_only=False, is_second_db=True)
+            set_library_reading_position_columns(db, column_config)
+            db.close()
 
 class ServiceTab(QWidget):
 
@@ -153,7 +166,6 @@ class ServiceTab(QWidget):
         self.check_reading_position_column_button.clicked.connect(self.check_position_columns)
         position_column_box_layout.addWidget(self.check_reading_position_column_button, 3, 0, 1, 1)
 
-
     def add_position_columns(self):
         self.generate_position_columns()
 
@@ -185,6 +197,7 @@ class ServiceTab(QWidget):
                             }
                         )
                         columns_added += 1
+                        column_info['exists'] = True
                     except BaseException as e:
                         ret = -1
                         exc = str(e)

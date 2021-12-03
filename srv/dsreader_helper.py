@@ -27,6 +27,11 @@ def dshelper_configuration(ctx, rd):
     except ImportError:
         pass
 
+    try:
+        result['reading_position_prefs'] = get_reading_position_prefs()
+    except ImportError:
+        pass
+
     return result
 
 def get_dsreader_helper_prefs():
@@ -90,5 +95,26 @@ def get_goodreads_sync_prefs():
             prefs["plugin_prefs"]['Users'][profile].pop('userId', None)
             prefs["plugin_prefs"]['Users'][profile].pop('userSecret', None)
             prefs["plugin_prefs"]['Users'][profile].pop('userToken', None)
+
+    return prefs
+
+def get_reading_position_prefs():
+    prefs = {}
+    from calibre_plugins.dsreader_helper.config import (get_library_reading_position_columns)
+
+    from calibre.gui2 import gui_prefs
+    gprefs = gui_prefs()
+    # print("library_usage_stats %s" % str(gprefs['library_usage_stats']))
+
+    library_configs = {}
+    from calibre.db.legacy import LibraryDatabase
+    for library_path in gprefs['library_usage_stats']:
+        db = LibraryDatabase(library_path, read_only=True, is_second_db=True)
+        library_config = get_library_reading_position_columns(db)
+        db.close()
+        library_name = os.path.basename(library_path)
+        library_configs[library_name] = library_config
+
+    prefs['library_config'] = library_configs
 
     return prefs
