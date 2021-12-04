@@ -100,7 +100,8 @@ def get_goodreads_sync_prefs():
 
 def get_reading_position_prefs():
     prefs = {}
-    from calibre_plugins.dsreader_helper.config import (get_library_reading_position_columns)
+    from calibre_plugins.dsreader_helper.config import (get_library_reading_position_columns, get_library_reading_position_options)
+    from calibre_plugins.dsreader_helper.config import PREFS_KEY_READING_POSITION_COLUMNS, PREFS_KEY_READING_POSITION_OPTIONS
 
     from calibre.gui2 import gui_prefs
     gprefs = gui_prefs()
@@ -110,10 +111,14 @@ def get_reading_position_prefs():
     from calibre.db.legacy import LibraryDatabase
     for library_path in gprefs['library_usage_stats']:
         db = LibraryDatabase(library_path, read_only=True, is_second_db=True)
-        library_config = get_library_reading_position_columns(db)
+        library_options = get_library_reading_position_options(db)
+        library_columns = get_library_reading_position_columns(db)
         db.close()
         library_name = os.path.basename(library_path)
-        library_configs[library_name] = library_config
+        library_configs[library_name] = {
+            PREFS_KEY_READING_POSITION_COLUMNS: library_columns,
+            PREFS_KEY_READING_POSITION_OPTIONS: library_options
+        }
 
     prefs['library_config'] = library_configs
 
