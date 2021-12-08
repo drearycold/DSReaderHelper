@@ -46,23 +46,6 @@ def get_count_pages_prefs():
     from calibre_plugins.count_pages.config import (plugin_prefs, get_library_config)
     prefs["plugin_prefs"] = copy.deepcopy(plugin_prefs)
 
-    # from calibre.customize.ui import find_plugin
-    # plugin = find_plugin('Count Pages')
-    # db = plugin.actual_plugin_.gui.current_db
-    # print("plugin db %s" % str(db.library_id))
-    # for p in db:
-    #     print("p db %s" % str(p))
-
-    # from calibre.gui2.ui import get_gui
-    # gui = get_gui()
-    # print("gui %s" % str(gui))
-
-    # from calibre.gui2.main import prefs
-    # print("prefs %s" % str(prefs))
-    
-    # library_path = prefs['library_path']
-    # print("library_path %s" % str(library_path))
-
     from calibre.gui2 import gui_prefs
     gprefs = gui_prefs()
     # print("library_usage_stats %s" % str(gprefs['library_usage_stats']))

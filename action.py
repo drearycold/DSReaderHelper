@@ -50,18 +50,6 @@ class DSReaderHelperAction(InterfaceAction):
         # Used to store callback details when called from another plugin.
         self.plugin_callback = None
 
-        # from calibre.srv.opts import server_config
-        # import copy
-        # opts = copy.copy(server_config())
-        # opts.port += 1
-        # print('server_config %s' % str(opts))
-        # print('port %s' % str(opts.port))
-        # print('library_broker %s' % str(self.gui.library_broker))
-        
-        # from calibre.srv.handler import Handler
-        # handler = Handler(self.gui.library_broker, opts)
-        # print('handler %s' % str(handler))
-
         # from calibre.srv.embedded import Server
         from calibre_plugins.dsreader_helper.srv.server import Server
         from calibre.gui2 import Dispatcher
@@ -70,7 +58,22 @@ class DSReaderHelperAction(InterfaceAction):
         self.server.start()
         print('server current_thread %s' % str(self.server.current_thread))
 
-        
+        import os, sys
+        sys.path.append(os.path.dirname(cfg.__file__) + '/mdict_query')
+        from calibre_plugins.dsreader_helper.mdict_query import mdict_query
+
+        basepath = '/Users/kyoutarou/Calibre Libraries'
+        libname = 'Dictionary'
+        cfg.plugin_prefs[cfg.KEY_DICT_VIEWER_LIBRARY_NAME] = libname
+        dicname = 'Oxford Dictionary of English'
+        self.builders = {
+            dicname:
+            mdict_query.IndexBuilder("%s/%s/%s/oxford_dictionary_of_english.mdx" % (basepath, libname, dicname))
+        }
+        print('dict builders: %s %s' % (str(self), str(self.builders)))
+        # result_text = builder.mdx_lookup('dedication')
+        # print('mdx result %s' % result_text)
+
     def handle_changes_from_server(self, library_path, change_event):
         print('Received server change event: {} for {}'.format(change_event, library_path))
         # if self.library_broker.is_gui_library(library_path):

@@ -45,6 +45,8 @@ KEY_READING_POSITION_COLUMN_NAME = 'readingPositionColumnName'
 KEY_READING_POSITION_COLUMN_PREFIX = 'readingPositionColumnPrefix'
 KEY_READING_POSITION_COLUMN_USER_SEPARATED = 'readingPositionColumnUserSeparated'
 KEY_READING_POSITION_COLUMN_ALL_LIBRARY = 'readingPositionColumnAllLibrary'
+KEY_DICT_VIEWER_ENABLED = 'dictViewerEnabled'
+KEY_DICT_VIEWER_LIBRARY_NAME = 'dictViewerLibraryName'
 
 PLUGIN_ICONS = [
                 'images/dsreader.png',
@@ -59,7 +61,9 @@ DEFAULT_STORE_VALUES = {
                         KEY_READING_POSITION_COLUMN_NAME: 'Reading Position',
                         KEY_READING_POSITION_COLUMN_PREFIX: 'read_pos',
                         KEY_READING_POSITION_COLUMN_USER_SEPARATED: True,
-                        KEY_READING_POSITION_COLUMN_ALL_LIBRARY: False
+                        KEY_READING_POSITION_COLUMN_ALL_LIBRARY: False,
+                        KEY_DICT_VIEWER_ENABLED: True,
+                        KEY_DICT_VIEWER_LIBRARY_NAME: 'Dictionaries'
                     }
 
 # This is where all preferences for this plugin will be stored
@@ -181,7 +185,7 @@ class ServiceTab(QWidget):
         self.check_reading_position_column_button.clicked.connect(self.check_position_columns)
         position_column_box_layout.addWidget(self.check_reading_position_column_button, 3, 0, 1, 1)
 
-        self.add_reading_position_column_button = QPushButton(_('Save Settings'), self)
+        self.add_reading_position_column_button = QPushButton(_('Commit Changes'), self)
         self.add_reading_position_column_button.setToolTip(_('Save and Add Reading Position Columns'))
         self.add_reading_position_column_button.clicked.connect(self.add_position_columns)
         position_column_box_layout.addWidget(self.add_reading_position_column_button, 3, 1, 1, 1)
