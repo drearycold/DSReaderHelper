@@ -7,6 +7,9 @@ __license__   = 'GPL v3'
 __copyright__ = '2021, Drearycold <drearycold@gmail.com>'
 __docformat__ = 'restructuredtext en'
 
+import os, sys
+from zipfile import ZipFile
+
 from functools import partial
 try:
     from PyQt5.Qt import QToolButton, QMenu
@@ -58,19 +61,7 @@ class DSReaderHelperAction(InterfaceAction):
         self.server.start()
         print('server current_thread %s' % str(self.server.current_thread))
 
-        import os, sys
-        sys.path.append(os.path.dirname(cfg.__file__) + '/mdict_query')
-        from calibre_plugins.dsreader_helper.mdict_query import mdict_query
-
-        basepath = '/Users/kyoutarou/Calibre Libraries'
-        libname = 'Dictionary'
-        cfg.plugin_prefs[cfg.KEY_DICT_VIEWER_LIBRARY_NAME] = libname
-        dicname = 'Oxford Dictionary of English'
-        self.builders = {
-            dicname:
-            mdict_query.IndexBuilder("%s/%s/%s/oxford_dictionary_of_english.mdx" % (basepath, libname, dicname))
-        }
-        print('dict builders: %s %s' % (str(self), str(self.builders)))
+        self.rebuild_dict_builders()
         # result_text = builder.mdx_lookup('dedication')
         # print('mdx result %s' % result_text)
 
@@ -96,4 +87,57 @@ class DSReaderHelperAction(InterfaceAction):
     def show_configuration(self):
         self.interface_action_base_plugin.do_user_config(self.gui)
 
-    
+    def rebuild_dict_builders(self):
+        self.builders = {}
+        c = cfg.plugin_prefs[cfg.STORE_NAME]
+
+        import os, sys
+        sys.path.append(os.path.dirname(cfg.__file__) + '/mdict_query')
+        from calibre_plugins.dsreader_helper.mdict_query import mdict_query
+
+        from calibre.srv.library_broker import load_gui_libraries
+        library_paths = load_gui_libraries()
+        gui_libraries = {os.path.basename(l):l for l in library_paths}
+        dic_library_name = c[cfg.KEY_DICT_VIEWER_LIBRARY_NAME]
+        if dic_library_name not in gui_libraries:
+            return
+        
+        dic_library_path = gui_libraries[dic_library_name]
+        from calibre.db.legacy import LibraryDatabase
+        dic_library = LibraryDatabase(dic_library_path, read_only=True, is_second_db=True)
+        from calibre.constants import cache_dir
+        dic_cache_dir = os.path.join(cache_dir(), 'dsreader_helper_dictionaries')
+        for book_id in dic_library.all_ids():
+            formats = dic_library.get_field(book_id, 'formats', index_is_id=True)
+            print('dic formats %s' % str(formats))
+            if 'ZIP' not in formats:
+                continue
+        
+            dicbook_title = dic_library.get_field(book_id, 'title', index_is_id=True)
+            dicbook_fmt_path = dic_library.format_abspath(book_id, 'ZIP', index_is_id=True)
+            from pathlib import Path
+            dicbook_basename = Path(dicbook_fmt_path).stem
+            print('unzip %s %s' % (dic_cache_dir, dicbook_basename))
+            dicbook_cache_dir = os.path.join(dic_cache_dir, dicbook_basename)
+            unzip(dicbook_fmt_path, dicbook_cache_dir)
+            mdx_filenames = list(Path(dicbook_cache_dir).rglob("*.[mM][dD][xX]"))
+            for mdx_filename in mdx_filenames:
+                print('dict builder mdx %s' % mdx_filename)
+                self.builders[dicbook_title] = {
+                        'basepath': os.path.dirname(mdx_filename),
+                        'builder': mdict_query.IndexBuilder(mdx_filename)
+                    }
+                print('dict builders: %s %s' % (str(self), str(self.builders)))
+
+def unzip(src_path, dst_dir, pwd=None):
+    with ZipFile(src_path) as zf:
+        members = zf.namelist()
+        for member in members:
+            arch_info = zf.getinfo(member)
+            arch_name = arch_info.filename.replace('/', os.path.sep)
+            dst_path = os.path.join(dst_dir, arch_name)
+            dst_path = os.path.normpath(dst_path)
+            # print('unzip dst_path %s' % dst_path)
+            if not os.path.exists(dst_path):
+                p = zf.extract(arch_info, dst_dir, pwd)
+                # print('unzip %s' % p)

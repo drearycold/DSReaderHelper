@@ -14,11 +14,8 @@ from polyglot.urllib import unquote
 def dshelper_dict_viewer(ctx, rd, req_type):
     import traceback
     traceback.print_stack()
-    
-    basepath = '/Users/kyoutarou/Calibre Libraries'
-    libname = cfg.plugin_prefs[cfg.KEY_DICT_VIEWER_LIBRARY_NAME]
 
-    print('dshelper_dict_viewer req_type %s %s %s' % (basepath, libname, req_type))
+    print('dshelper_dict_viewer req_type %s' % (req_type))
 
     if req_type == 'lookup':
         word = rd.query.get('word', None)
@@ -35,7 +32,7 @@ def dshelper_dict_viewer(ctx, rd, req_type):
 
             for dicname in builders:
                 dicname_quote = quote(dicname)
-                builder = builders[dicname]
+                builder = builders[dicname]['builder']
                 print('dshelper_dict_viewer builder %s' % str(builder))
                 contents = builder.mdx_lookup(word)
                 for content in contents:
@@ -66,7 +63,7 @@ def dshelper_dict_viewer(ctx, rd, req_type):
                     print(dict_soup.prettify())
                     dictresult.append(dict_soup.prettify())
         try:
-            dictresult.insert(0, '<html><body>')
+            dictresult.insert(0, '<html><head><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"></head><body>')
             # dictresult.insert(1, '<script src="resources?dic=static&id=mdict.js"></script>')
 
             dictresult.append('</body></html>')
@@ -102,33 +99,32 @@ def dshelper_dict_viewer(ctx, rd, req_type):
                         rd.outheaders.set('Content-Type', 'text/css; charset=UTF-8', replace_all=True)
                     return data
 
-        res_path = '/'.join([basepath, libname, req_dic_unquote, req_id_unquote])
-        print('dshelper_dict_viewer resources %s' % res_path)
-        
-        if os.path.exists(res_path):
-            with open(res_path, 'r') as file:
-                data = file.read()
-                if res_path.endswith('.js'):
-                    rd.outheaders.set('Content-Type', 'text/javascript; charset=UTF-8', replace_all=True)
-                if res_path.endswith('.css'):
-                    rd.outheaders.set('Content-Type', 'text/css; charset=UTF-8', replace_all=True)
-                return data
-        
         action = find_plugin("DSReader Helper")
         if action and action.actual_plugin_:
             print('dshelper_dict_viewer resources mdd %s %s' % (req_dic_unquote, req_id_unquote))
             builders = action.actual_plugin_.builders
 
             if req_dic_unquote in builders:
-                builder = builders[req_dic_unquote]
+                res_path = os.path.join(builders[req_dic_unquote]['basepath'], req_id_unquote)
+                print('dshelper_dict_viewer resources %s' % res_path)
+            
+                if os.path.exists(res_path):
+                    with open(res_path, 'r') as file:
+                        data = file.read()
+                        if res_path.endswith('.js'):
+                            rd.outheaders.set('Content-Type', 'text/javascript; charset=UTF-8', replace_all=True)
+                        if res_path.endswith('.css'):
+                            rd.outheaders.set('Content-Type', 'text/css; charset=UTF-8', replace_all=True)
+                        return data
+
+            
+                builder = builders[req_dic_unquote]['builder']
                 keyword = '\\%s' % '\\'.join(req_id_unquote.split('/'))   # according to flask-mdict
                 data = builder.mdd_lookup(keyword, ignorecase=True)
-                print('dshelper_dict_viewer resources data %s %s' % (keyword, str(data)))
+                # print('dshelper_dict_viewer resources data %s %s' % (keyword, str(data)))
                 rd.outheaders.set('Content-Type', 'image/png', replace_all=True)
 
                 return data
-
-
 
 # @endpoint('/dshelper/dict_viewer/{req_type1}/{req_type2}/{req_type3}',
 #     types={'req_type1': str, 'req_type2': str, 'req_type3': str},

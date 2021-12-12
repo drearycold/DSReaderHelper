@@ -62,7 +62,7 @@ DEFAULT_STORE_VALUES = {
                         KEY_READING_POSITION_COLUMN_PREFIX: 'read_pos',
                         KEY_READING_POSITION_COLUMN_USER_SEPARATED: True,
                         KEY_READING_POSITION_COLUMN_ALL_LIBRARY: False,
-                        KEY_DICT_VIEWER_ENABLED: True,
+                        KEY_DICT_VIEWER_ENABLED: False,
                         KEY_DICT_VIEWER_LIBRARY_NAME: 'Dictionaries'
                     }
 
@@ -112,6 +112,8 @@ class ConfigWidget(QWidget):
         new_prefs[KEY_READING_POSITION_COLUMN_PREFIX] = self.service_tab.position_column_prefix_ledit.text()
         new_prefs[KEY_READING_POSITION_COLUMN_USER_SEPARATED] = self.service_tab.position_column_user_separate_checkbox.isChecked()
         new_prefs[KEY_READING_POSITION_COLUMN_ALL_LIBRARY] = self.service_tab.position_column_all_libraries_checkbox.isChecked()
+        new_prefs[KEY_DICT_VIEWER_ENABLED] = self.service_tab.dictionary_viewer_checkbox.isChecked()
+        new_prefs[KEY_DICT_VIEWER_LIBRARY_NAME] = self.service_tab.dictionary_viewer_library_combobox.selected_value()
 
         plugin_prefs[STORE_NAME] = new_prefs
 
@@ -189,6 +191,26 @@ class ServiceTab(QWidget):
         self.add_reading_position_column_button.setToolTip(_('Save and Add Reading Position Columns'))
         self.add_reading_position_column_button.clicked.connect(self.add_position_columns)
         position_column_box_layout.addWidget(self.add_reading_position_column_button, 3, 1, 1, 1)
+
+        # -----------
+        dictionary_column_box = QGroupBox(_('Dictionary Viewer options:'), self)
+        layout.addWidget(dictionary_column_box)
+        dictionary_column_box_layout = QGridLayout()
+        dictionary_column_box.setLayout(dictionary_column_box_layout)
+
+        self.dictionary_viewer_checkbox = QCheckBox(_('Enable'), self)
+        self.dictionary_viewer_checkbox.setChecked(c.get(KEY_DICT_VIEWER_ENABLED, DEFAULT_STORE_VALUES[KEY_DICT_VIEWER_ENABLED]))
+        self.dictionary_viewer_checkbox.setToolTip(_('Enable Dictionary View API for DSReader App'))
+        dictionary_column_box_layout.addWidget(self.dictionary_viewer_checkbox, 0, 0, 1, 1)
+
+        from calibre_plugins.dsreader_helper.common_utils import ListComboBox
+        from calibre.srv.library_broker import load_gui_libraries
+        library_paths = load_gui_libraries()
+        gui_libraries = {os.path.basename(l):l for l in library_paths}
+        self.dictionary_viewer_library_combobox = ListComboBox(self, gui_libraries, c.get(KEY_DICT_VIEWER_LIBRARY_NAME, DEFAULT_STORE_VALUES[KEY_DICT_VIEWER_LIBRARY_NAME]))
+        self.dictionary_viewer_library_combobox.setToolTip(_('select the library to be used by dictionary viewer'))
+        dictionary_column_box_layout.addWidget(QLabel(_('Library Name:'), self), 1, 0, 1, 1)
+        dictionary_column_box_layout.addWidget(self.dictionary_viewer_library_combobox, 1, 1, 1, 1)
 
     def add_position_columns(self):
         self.generate_position_columns()
