@@ -24,50 +24,63 @@ def dshelper_dict_viewer(ctx, rd, req_type):
 
         dictresult = []
         result = ''
-        action = find_plugin("DSReader Helper")
-        if action and action.actual_plugin_:
-            print('dshelper_dict_viewer word %s' % word)
-            builders = action.actual_plugin_.builders
-            print('dshelper_dict_viewer builders %s' % str(builders))
+        print('dshelper_dict_viewer word %s' % word)
+        print('dshelper_dict_viewer builders %s' % str(cfg.dict_builders))
 
-            for dicname in builders:
-                dicname_quote = quote(dicname)
-                builder = builders[dicname]['builder']
-                print('dshelper_dict_viewer builder %s' % str(builder))
-                contents = builder.mdx_lookup(word)
-                for content in contents:
-                    dict_soup = bs4.BeautifulSoup(content, 'html.parser')
-                    for link in dict_soup.find_all('link'):
-                        if link.has_attr('href'):
-                            link_href = link['href']
-                            link_href_quote = quote(link_href)
-                            link['href'] = 'resources?dic=%s&id=%s' % (dicname_quote, link_href_quote)
-                    for script in dict_soup.find_all('script'):
-                        if script.has_attr('src'):
-                            script_src = script['src']
-                            script_src_quote = quote(script_src)
-                            script['src'] = 'resources?dic=%s&id=%s' % (dicname_quote, script_src_quote)
-                    for img in dict_soup.find_all('img'):
-                        if img.has_attr('src'):
-                            img_src = img['src']
-                            img_src_quote = quote(img_src)
-                            img['src'] = 'resources?dic=%s&id=%s' % (dicname_quote, img_src_quote)
+        c = cfg.plugin_prefs[cfg.STORE_NAME]
+        library_dict_ordered_list = c.get(cfg.KEY_DICT_VIEWER_ORDERED_LIST, {})
+        dict_library_name = c.get(cfg.KEY_DICT_VIEWER_LIBRARY_NAME, '')
+        dict_ordered_list = library_dict_ordered_list.get(dict_library_name, [])
+        for dict_entry in dict_ordered_list:
+            dicname = '%d#%s' % (dict_entry['id'], dict_entry['mdx'])
+            if dicname not in cfg.dict_builders:
+                continue
+            dicname_quote = quote(dicname)
+            builder = cfg.dict_builders[dicname].get('builder', None)
+            if not builder:
+                continue
+            print('dshelper_dict_viewer builder %s' % str(builder))
+            contents = builder.mdx_lookup(word)
+            for content in contents:
+                dict_soup = bs4.BeautifulSoup(content, 'html.parser')
+                for link in dict_soup.find_all('link'):
+                    if link.has_attr('href'):
+                        link_href = link['href']
+                        link_href_quote = quote(link_href)
+                        link['href'] = 'resources?dic=%s&id=%s' % (dicname_quote, link_href_quote)
+                for script in dict_soup.find_all('script'):
+                    if script.has_attr('src'):
+                        script_src = script['src']
+                        script_src_quote = quote(script_src)
+                        script['src'] = 'resources?dic=%s&id=%s' % (dicname_quote, script_src_quote)
+                for img in dict_soup.find_all('img'):
+                    if img.has_attr('src'):
+                        img_src = img['src']
+                        img_src_quote = quote(img_src)
+                        img['src'] = 'resources?dic=%s&id=%s' % (dicname_quote, img_src_quote)
 
-                    for a in dict_soup.find_all('a'):
-                        if a.has_attr('href'):
-                            a_href = a['href']
-                            a_href = a_href.replace('entry://#', '#')
-                            a_href = a_href.replace('entry://', 'lookup?word=')
-                            a['href'] = a_href
+                for a in dict_soup.find_all('a'):
+                    if a.has_attr('href'):
+                        a_href = a['href']
+                        a_href = a_href.replace('entry://#', '#')
+                        a_href = a_href.replace('entry://', 'lookup?word=')
+                        a['href'] = a_href
 
-                    print(dict_soup.prettify())
-                    dictresult.append(dict_soup.prettify())
+                print(dict_soup.prettify())
+
+                dictresult.append(
+                    '<h5>' + cfg.dict_builders[dicname]['title'] + "</h5>" +
+                    dict_soup.prettify()
+                )
         try:
-            dictresult.insert(0, '<html><head><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"></head><body>')
+            dictresult.insert(0, '<html><head>\
+                <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">\
+                <style>h5 { text-align: center; }</style>\
+                </head><body>')
             # dictresult.insert(1, '<script src="resources?dic=static&id=mdict.js"></script>')
 
             dictresult.append('</body></html>')
-            result = '\n'.join(dictresult)
+            result = '<hr />\n'.join(dictresult)
             # print('dshelper_dict_viewer result %s' % str(result))
         except BaseException as e:
             print('dshelper_dict_viewer except %s' % str(e))
@@ -99,32 +112,29 @@ def dshelper_dict_viewer(ctx, rd, req_type):
                         rd.outheaders.set('Content-Type', 'text/css; charset=UTF-8', replace_all=True)
                     return data
 
-        action = find_plugin("DSReader Helper")
-        if action and action.actual_plugin_:
-            print('dshelper_dict_viewer resources mdd %s %s' % (req_dic_unquote, req_id_unquote))
-            builders = action.actual_plugin_.builders
+        print('dshelper_dict_viewer resources mdd %s %s' % (req_dic_unquote, req_id_unquote))
+    
+        if req_dic_unquote in cfg.dict_builders:
+            res_path = os.path.join(cfg.dict_builders[req_dic_unquote]['basepath'], req_id_unquote)
+            print('dshelper_dict_viewer resources %s' % res_path)
+        
+            if os.path.exists(res_path):
+                with open(res_path, 'r') as file:
+                    data = file.read()
+                    if res_path.endswith('.js'):
+                        rd.outheaders.set('Content-Type', 'text/javascript; charset=UTF-8', replace_all=True)
+                    if res_path.endswith('.css'):
+                        rd.outheaders.set('Content-Type', 'text/css; charset=UTF-8', replace_all=True)
+                    return data
 
-            if req_dic_unquote in builders:
-                res_path = os.path.join(builders[req_dic_unquote]['basepath'], req_id_unquote)
-                print('dshelper_dict_viewer resources %s' % res_path)
-            
-                if os.path.exists(res_path):
-                    with open(res_path, 'r') as file:
-                        data = file.read()
-                        if res_path.endswith('.js'):
-                            rd.outheaders.set('Content-Type', 'text/javascript; charset=UTF-8', replace_all=True)
-                        if res_path.endswith('.css'):
-                            rd.outheaders.set('Content-Type', 'text/css; charset=UTF-8', replace_all=True)
-                        return data
+        
+            builder = cfg.dict_builders[req_dic_unquote]['builder']
+            keyword = '\\%s' % '\\'.join(req_id_unquote.split('/'))   # according to flask-mdict
+            data = builder.mdd_lookup(keyword, ignorecase=True)
+            # print('dshelper_dict_viewer resources data %s %s' % (keyword, str(data)))
+            rd.outheaders.set('Content-Type', 'image/png', replace_all=True)
 
-            
-                builder = builders[req_dic_unquote]['builder']
-                keyword = '\\%s' % '\\'.join(req_id_unquote.split('/'))   # according to flask-mdict
-                data = builder.mdd_lookup(keyword, ignorecase=True)
-                # print('dshelper_dict_viewer resources data %s %s' % (keyword, str(data)))
-                rd.outheaders.set('Content-Type', 'image/png', replace_all=True)
-
-                return data
+            return data
 
 # @endpoint('/dshelper/dict_viewer/{req_type1}/{req_type2}/{req_type3}',
 #     types={'req_type1': str, 'req_type2': str, 'req_type3': str},
