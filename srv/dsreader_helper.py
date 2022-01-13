@@ -11,6 +11,7 @@ def dshelper_status(ctx, rd, job_id):
 @endpoint('/dshelper/configuration', auth_required=True, postprocess=json)
 def dshelper_configuration(ctx, rd):
     result = {}
+    print('dshelper_configuration %s' % str(result))
 
     try:
         result['dsreader_helper_prefs'] = get_dsreader_helper_prefs()
@@ -36,9 +37,11 @@ def dshelper_configuration(ctx, rd):
 
 def get_dsreader_helper_prefs():
     prefs = {}
-    from calibre_plugins.dsreader_helper.config import (plugin_prefs)
-    prefs["plugin_prefs"] = copy.deepcopy(plugin_prefs)
+    from calibre_plugins.dsreader_helper.config import (plugin_prefs, STORE_NAME, KEY_DICT_VIEWER_ORDERED_LIST)
 
+    prefs["plugin_prefs"] = copy.deepcopy(plugin_prefs)
+    print('get_dsreader_helper_prefs %s' % str(prefs))
+    del prefs['plugin_prefs'][STORE_NAME][KEY_DICT_VIEWER_ORDERED_LIST]
     return prefs
 
 def get_count_pages_prefs():

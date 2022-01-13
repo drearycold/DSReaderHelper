@@ -66,7 +66,7 @@ DEFAULT_STORE_VALUES = {
                         KEY_READING_POSITION_COLUMN_USER_SEPARATED: True,
                         KEY_READING_POSITION_COLUMN_ALL_LIBRARY: False,
                         KEY_DICT_VIEWER_ENABLED: False,
-                        KEY_DICT_VIEWER_LIBRARY_NAME: 'Dictionaries',
+                        KEY_DICT_VIEWER_LIBRARY_NAME: 'Dictionary',
                         KEY_DICT_VIEWER_ORDERED_LIST: {},  #library name -> list of dictionaries
                     }
 
@@ -77,7 +77,11 @@ plugin_prefs.defaults[STORE_NAME] = DEFAULT_STORE_VALUES
 dict_builders = {}
 
 def get_library_reading_position_options(db):
-    return db.prefs.get_namespaced(PREFS_NAMESPACE, PREFS_KEY_READING_POSITION_OPTIONS, {})
+    return db.prefs.get_namespaced(PREFS_NAMESPACE, PREFS_KEY_READING_POSITION_OPTIONS, {
+        KEY_READING_POSITION_COLUMN_NAME: DEFAULT_STORE_VALUES[KEY_READING_POSITION_COLUMN_NAME],
+        KEY_READING_POSITION_COLUMN_PREFIX: DEFAULT_STORE_VALUES[KEY_READING_POSITION_COLUMN_PREFIX],
+        KEY_READING_POSITION_COLUMN_USER_SEPARATED: DEFAULT_STORE_VALUES[KEY_READING_POSITION_COLUMN_USER_SEPARATED]
+    })
 
 def set_library_reading_position_options(db, options):
     db.prefs.set_namespaced(PREFS_NAMESPACE, PREFS_KEY_READING_POSITION_OPTIONS, options)

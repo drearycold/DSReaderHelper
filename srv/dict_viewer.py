@@ -10,7 +10,7 @@ from urllib.parse import (quote, unquote)
 import calibre_plugins.dsreader_helper.config as cfg
 from polyglot.urllib import unquote
 
-@endpoint('/dshelper/dict_viewer/{req_type}', types={'req_type': str}, auth_required=True)
+@endpoint('/dshelper/dict_viewer/{req_type}', types={'req_type': str}, auth_required=False)
 def dshelper_dict_viewer(ctx, rd, req_type):
     import traceback
     traceback.print_stack()
