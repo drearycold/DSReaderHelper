@@ -56,7 +56,7 @@ def get_count_pages_prefs():
     library_configs = {}
     from calibre.db.legacy import LibraryDatabase
     for library_path in gprefs['library_usage_stats']:
-        db = LibraryDatabase(library_path, read_only=True, is_second_db=True)
+        db = LibraryDatabase(library_path, read_only=False, is_second_db=False)
         library_config = get_library_config(db)
         print("library_config %s" % str(library_config))
         db.close()
@@ -96,7 +96,7 @@ def get_reading_position_prefs():
     library_configs = {}
     from calibre.db.legacy import LibraryDatabase
     for library_path in gprefs['library_usage_stats']:
-        db = LibraryDatabase(library_path, read_only=True, is_second_db=True)
+        db = LibraryDatabase(library_path, read_only=False, is_second_db=False)
         library_options = get_library_reading_position_options(db)
         library_columns = get_library_reading_position_columns(db)
         db.close()

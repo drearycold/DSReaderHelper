@@ -129,9 +129,9 @@ def dshelper_dict_viewer(ctx, rd, req_type):
 
         
             builder = cfg.dict_builders[req_dic_unquote]['builder']
-            keyword = '\\%s' % '\\'.join(req_id_unquote.split('/'))   # according to flask-mdict
+            keyword = '\\%s' % '\\'.join(req_id_unquote.strip('/').split('/'))   # according to flask-mdict
             data = builder.mdd_lookup(keyword, ignorecase=True)
-            # print('dshelper_dict_viewer resources data %s %s' % (keyword, str(data)))
+            print('dshelper_dict_viewer resources data from mdd %s %s' % (keyword, str(data)))
             rd.outheaders.set('Content-Type', 'image/png', replace_all=True)
 
             return data
