@@ -66,11 +66,13 @@ def dshelper_dict_viewer(ctx, rd, req_type):
                         a_href = a_href.replace('entry://', 'lookup?word=')
                         a['href'] = a_href
 
-                print(dict_soup.prettify())
+                # print(dict_soup.prettify())
 
                 dictresult.append(
+                    '<div class="mdictDefinition" id="mdictDefinition' + str(len(dictresult)) + '">' + 
                     '<h5>' + cfg.dict_builders[dicname]['title'] + "</h5>" +
-                    dict_soup.prettify()
+                    dict_soup.prettify() +
+                    '</div>'
                 )
         try:
             dictresult.insert(0, '<html><head>\
