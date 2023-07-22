@@ -113,6 +113,7 @@ def dshelper_dict_viewer(ctx, rd, req_type):
             with ZipFile(zip_path, 'r') as myzip:
                 with myzip.open(res_path, 'r') as file:
                     data = file.read()
+                    return dshelper_dict_resource_process(rd, data, res_path)
                     if res_path.endswith('.js'):
                         rd.outheaders.set('Content-Type', 'text/javascript; charset=UTF-8', replace_all=True)
                         print("javascript 1 %s %s %s" % (res_path, type(data), str(data)))
@@ -137,9 +138,10 @@ def dshelper_dict_viewer(ctx, rd, req_type):
             res_path = os.path.join(cfg.dict_builders[req_dic_unquote]['basepath'], req_id_unquote)
             print('dshelper_dict_viewer resources %s' % res_path)
         
-            if os.path.exists(res_path):    #data is str
-                with open(res_path, 'r') as file:
+            if os.path.exists(res_path):
+                with open(res_path, 'rb') as file:  #read data as bytes
                     data = file.read()
+                    return dshelper_dict_resource_process(rd, data, res_path)
                     if res_path.endswith('.js'):
                         rd.outheaders.set('Content-Type', 'text/javascript; charset=UTF-8', replace_all=True)
                         print("javascript 2 %s %s %s" % (res_path, type(data), str(data)))
@@ -163,6 +165,7 @@ def dshelper_dict_viewer(ctx, rd, req_type):
             res_path = '\\%s' % '\\'.join(req_id_unquote.strip('/').split('/'))   # according to flask-mdict
             datum = builder.mdd_lookup(res_path, ignorecase=True)
             for data in datum:      #data is bytes
+                return dshelper_dict_resource_process(rd, data, res_path)
                 print('dshelper_dict_viewer resources data from mdd %s %d' % (res_path, len(str(data))))
                 if res_path.endswith('.js'):
                     rd.outheaders.set('Content-Type', 'text/javascript; charset=UTF-8', replace_all=True)
@@ -186,6 +189,32 @@ def dshelper_dict_viewer(ctx, rd, req_type):
                 print('dshelper_dict_viewer 3 resources data from mdd %s %d' % (res_path, len(str(data))))
                 #print('dshelper_dict_viewer resources data from mdd %s %s' % (res_path, str(data)))
                 return data
+
+#data in bytes
+def dshelper_dict_resource_process(rd, data, res_path):
+    print("dshelper_dict_resource_process %s %s %s" % (res_path, type(data), len(data)))
+    if res_path.endswith('.js'):
+        rd.outheaders.set('Content-Type', 'text/javascript; charset=UTF-8', replace_all=True)
+        return data
+    elif res_path.endswith('.css'):
+        rd.outheaders.set('Content-Type', 'text/css; charset=UTF-8', replace_all=True)
+        if rd.cookies.get('textColor', '#') != '#':     #indicating dark theme
+            import re
+            textColor = rd.cookies["textColor"]
+            css_str = data.decode("UTF-8")
+            css_str = re.sub(r'(?!-)color\s*:[^;}]+', r'color:%s' % textColor, css_str)
+            css_str = re.sub(r'(?!-)background\s*:[^;}]+', r'background:#2F2F2F', css_str)
+            css_str = re.sub(r'(?!-)background-color\s*:[^;}]+', r'background-color:#2F2F2F', css_str)
+            
+            print("textColor css %s %s %s" % (res_path, type(data), css_str))
+            return css_str.encode('utf-8')
+        else:
+            return data
+    else:
+        rd.outheaders.set('Content-Type', 'image/png', replace_all=True)
+        print('dshelper_dict_viewer resources data from mdd %s %d' % (res_path, len(str(data))))
+        #print('dshelper_dict_viewer resources data from mdd %s %s' % (res_path, str(data)))
+        return data
 
 # @endpoint('/dshelper/dict_viewer/{req_type1}/{req_type2}/{req_type3}',
 #     types={'req_type1': str, 'req_type2': str, 'req_type3': str},
