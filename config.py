@@ -532,6 +532,8 @@ def rebuild_dict_builders(dict_library_name=None):
     dict_ordered_list = [d for d in dict_ordered_list if d.get('id', 0) in dic_library_all_ids]
     for dict_entry in dict_ordered_list:
         dict_entry['title'] = dic_library.get_field(dict_entry['id'], 'title', index_is_id=True)
+        if 'zipped' not in dict_entry:
+            dict_entry['zipped'] = True
 
     # 
     import fnmatch
@@ -539,20 +541,26 @@ def rebuild_dict_builders(dict_library_name=None):
     for book_id in dic_library_all_ids:
         formats = dic_library.get_field(book_id, 'formats', index_is_id=True)
         print('dic formats %s' % str(formats))
-        if 'ZIP' not in formats:
-            continue
-    
-        dicbook_title = dic_library.get_field(book_id, 'title', index_is_id=True)
-        dicbook_fmt_path = dic_library.format_abspath(book_id, 'ZIP', index_is_id=True)
+        if 'ZIP' in formats:
+            dicbook_title = dic_library.get_field(book_id, 'title', index_is_id=True)
+            dicbook_fmt_path = dic_library.format_abspath(book_id, 'ZIP', index_is_id=True)
+            
+            with zipfile.ZipFile(dicbook_fmt_path) as zf:
+                members = zf.namelist()
+                mdx_files = fnmatch.filter(members, '*.[mM][dD][xX]')
+                for mdx_file in mdx_files:
+                    print('refresh_dictionary_list title %s %s' % (dicbook_title, mdx_file))
+                    dict_entry = {'id': book_id, 'mdx': mdx_file, 'title': dicbook_title, 'zipped': True}
+                    if dict_entry not in dict_ordered_list:
+                        dict_ordered_list.append(dict_entry)
         
-        with zipfile.ZipFile(dicbook_fmt_path) as zf:
-            members = zf.namelist()
-            mdx_files = fnmatch.filter(members, '*.[mM][dD][xX]')
-            for mdx_file in mdx_files:
-                print('refresh_dictionary_list title %s %s' % (dicbook_title, mdx_file))
-                dict_entry = {'id': book_id, 'mdx': mdx_file, 'title': dicbook_title}
-                if dict_entry not in dict_ordered_list:
-                    dict_ordered_list.append(dict_entry)
+        if 'MDX' in formats:
+            dicbook_title = dic_library.get_field(book_id, 'title', index_is_id=True)
+            dicbook_fmt_path = dic_library.format_abspath(book_id, 'MDX', index_is_id=True)
+            print('refresh_dictionary_list title %s %s' % (dicbook_title, dicbook_fmt_path))
+            dict_entry = {'id': book_id, 'mdx': dicbook_fmt_path, 'title': dicbook_title, 'zipped': False}
+            if dict_entry not in dict_ordered_list:
+                dict_ordered_list.append(dict_entry)
 
     print('refresh_dictionary_list result %s' % str(dict_ordered_list))
 
@@ -564,14 +572,28 @@ def rebuild_dict_builders(dict_library_name=None):
 
     for dict_entry in dict_ordered_list:
         dicbook_title = dic_library.get_field(dict_entry['id'], 'title', index_is_id=True)
-        dicbook_fmt_path = dic_library.format_abspath(dict_entry['id'], 'ZIP', index_is_id=True)
-        from pathlib import Path
-        dicbook_basename = Path(dicbook_fmt_path).stem
-        print('unzip %s %s' % (dic_cache_dir, dicbook_basename))
-        dicbook_cache_dir = os.path.join(dic_cache_dir, dicbook_basename)
-        unzip(dicbook_fmt_path, dicbook_cache_dir)
-        mdx_filenames = list(Path(dicbook_cache_dir).rglob(dict_entry['mdx']))
-        for mdx_filename in mdx_filenames:
+        if dict_entry['zipped']:
+            dicbook_fmt_path = dic_library.format_abspath(dict_entry['id'], 'ZIP', index_is_id=True)
+            from pathlib import Path
+            dicbook_basename = Path(dicbook_fmt_path).stem
+            print('unzip %s %s' % (dic_cache_dir, dicbook_basename))
+            dicbook_cache_dir = os.path.join(dic_cache_dir, dicbook_basename)
+            unzip(dicbook_fmt_path, dicbook_cache_dir)
+            mdx_filenames = list(Path(dicbook_cache_dir).rglob(dict_entry['mdx']))
+            for mdx_filename in mdx_filenames:
+                print('dict builder mdx %s' % mdx_filename)
+                builder = mdict_query.IndexBuilder(mdx_filename)
+                if builder:
+                    print('builder title: %s' % builder._title)
+                    dict_builders['%d#%s' % (dict_entry['id'], dict_entry['mdx'])] = {
+                            'id': dict_entry['id'],
+                            'title': dicbook_title,
+                            'basepath': os.path.dirname(mdx_filename),
+                            'basename': os.path.basename(mdx_filename), 
+                            'builder': builder
+                        }
+        else:
+            mdx_filename = dict_entry['mdx']
             print('dict builder mdx %s' % mdx_filename)
             builder = mdict_query.IndexBuilder(mdx_filename)
             if builder:

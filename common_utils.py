@@ -17,8 +17,7 @@ try:
     from PyQt5.Qt import (Qt, QIcon, QPixmap, QLabel, QDialog, QHBoxLayout, QProgressBar,
                           QTableWidgetItem, QFont, QLineEdit, QComboBox,
                           QVBoxLayout, QDialogButtonBox, QStyledItemDelegate, QDateTime,
-                          QRegExpValidator, QRegExp, QTextEdit,
-                          QListWidget, QAbstractItemView)
+                          QTextEdit, QListWidget, QAbstractItemView)
 except ImportError as e:
     from PyQt4 import QtGui
     from PyQt4.Qt import (Qt, QIcon, QPixmap, QLabel, QDialog, QHBoxLayout, QProgressBar,
@@ -464,16 +463,6 @@ class ReadOnlyLineEdit(QLineEdit):
             text = ''
         QLineEdit.__init__(self, text, parent)
         self.setEnabled(False)
-
-
-class NumericLineEdit(QLineEdit):
-    '''
-    Allows a numeric value up to two decimal places, or an integer
-    '''
-    def __init__(self, *args):
-        QLineEdit.__init__(self, *args)
-        self.setValidator(QRegExpValidator(QRegExp(r'(^\d*\.[\d]{1,2}$)|(^[1-9]\d*[\.]$)'), self))
-
 
 class ListComboBox(QComboBox):
 
