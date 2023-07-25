@@ -1,5 +1,6 @@
 import os.path
 import copy
+import traceback
 
 from calibre.srv.routes import endpoint, json
 
@@ -35,6 +36,37 @@ def dshelper_configuration(ctx, rd):
 
     return result
 
+@endpoint('/dshelper/1/configuration/{library_id}', auth_required=True, postprocess=json)
+def dshelper_configuration_v1(ctx, rd, library_id):
+    result = {}
+    print('dshelper_configuration_v1 %s' % str(result))
+    
+    if library_id == "_":
+        try:
+            result['dsreader_helper_prefs'] = get_dsreader_helper_prefs()
+        except ImportError:
+            pass
+
+        try:
+            result['count_pages_prefs'] = get_count_pages_plugin_prefs()
+        except:
+            pass
+
+        try:
+            result['goodreads_sync_prefs'] = get_goodreads_sync_prefs()
+        except ImportError:
+            pass
+    
+    else:
+        try:
+            result['count_pages_prefs'] = get_count_pages_library_config(ctx, rd, library_id)
+        except Exception as e:
+            print("dshelper_configuration_v1 exception %s" % str(e))
+            traceback.print_exc()
+            pass
+
+    return result
+
 def get_dsreader_helper_prefs():
     prefs = {}
     from calibre_plugins.dsreader_helper.config import (plugin_prefs, STORE_NAME, KEY_DICT_VIEWER_ORDERED_LIST)
@@ -43,6 +75,21 @@ def get_dsreader_helper_prefs():
     print('get_dsreader_helper_prefs %s' % str(prefs))
     del prefs['plugin_prefs'][STORE_NAME][KEY_DICT_VIEWER_ORDERED_LIST]
     return prefs
+
+def get_count_pages_plugin_prefs():
+    from calibre_plugins.count_pages.config import plugin_prefs
+    return {'plugin_prefs': plugin_prefs}
+
+def get_count_pages_library_config(ctx, rd, library_id):
+    from calibre_plugins.count_pages.config import get_library_config
+
+    from calibre.srv.utils import get_db
+    db = get_db(ctx, rd, library_id)
+
+    library_config = get_library_config(db.backend)
+    print("library_config %s" % str(library_config))
+    
+    return {'library_config': {library_id: library_config}}
 
 def get_count_pages_prefs():
     prefs = {}
