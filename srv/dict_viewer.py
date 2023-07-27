@@ -178,7 +178,7 @@ def dshelper_dict_viewer(ctx, rd, req_type):
         if word is None:
             return b'missing word='
         
-        result = []
+        result = {}
         print('dshelper_dict_viewer word %s' % word)
         print('dshelper_dict_viewer builders %s' % str(cfg.dict_builders))
 
@@ -196,10 +196,13 @@ def dshelper_dict_viewer(ctx, rd, req_type):
                 continue
             print('dshelper_dict_viewer builder %s' % str(builder))
 
-            words = list(filter(lambda w: w.lower() != word, builder.get_mdx_keys(word)))
-            result += list(map(lambda w: w.lower(), words))
+            # words = list(filter(lambda w: w.lower() != word, builder.get_mdx_keys(word)))
+            # result += list(map(lambda w: w.lower(), words))
+            for hint in builder.get_mdx_keys(word):
+                print('dshelper_dict_viewer hint %s %s %s' % (word, hint, cfg.dict_builders[dicname]['title'], ))
+                result[hint] = result.get(hint, 0) + 1
         from calibre.utils.serialize import json_dumps
-        return json_dumps({"prefixed": sorted(set(result))})
+        return json_dumps({'prefixed': result})
 
 #data in bytes
 def dshelper_dict_resource_process(rd, data, res_path):
