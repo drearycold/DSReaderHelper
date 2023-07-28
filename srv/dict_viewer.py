@@ -8,6 +8,8 @@ import bs4
 from urllib.parse import (quote, unquote)
 import html
 
+import re
+
 import calibre_plugins.dsreader_helper.config as cfg
 from polyglot.urllib import unquote
 
@@ -65,6 +67,7 @@ def dshelper_dict_viewer(ctx, rd, req_type):
                         a_href = a['href']
                         a_href = a_href.replace('entry://#', '#')
                         a_href = a_href.replace('entry://', 'lookup?word=')
+                        a_href = re.sub(r'/+$', r'', a_href)
                         a['href'] = a_href
                 if rd.cookies.get('textColor', '#') != '#':
                     textColor = rd.cookies["textColor"]
@@ -101,9 +104,9 @@ def dshelper_dict_viewer(ctx, rd, req_type):
             header = '<html><head>\
                 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">\
                 <style>h5 { text-align: center; }</style>'
+            header += '<style id="style_folio_font">.mdictDefinition { font-family: sans-serif; font-size: 120%; line-height: 150%; }</style>'
             if 'backgroundColor' in rd.cookies:
                 header += '<style id="style_folio_background">html body { background-color: %s !important; }</style>' % rd.cookies['backgroundColor']
-                header += '<style id="style_folio_fontsize">.mdictDefinition { font-size: 120%; line-height: 150%; }</style>'
             if rd.cookies.get('textColor', '#') != '#':
                 header += '<style id="style_folio_text">html body { color: %s !important; }</style>' % rd.cookies['textColor']
             header += '</head><body>'
@@ -213,7 +216,6 @@ def dshelper_dict_resource_process(rd, data, res_path):
     elif res_path.endswith('.css'):
         rd.outheaders.set('Content-Type', 'text/css; charset=UTF-8', replace_all=True)
         if rd.cookies.get('textColor', '#') != '#':     #indicating dark theme
-            import re
             textColor = rd.cookies["textColor"]
             css_str = data.decode("UTF-8")
             css_str = re.sub(r'(?!-)color\s*:[^;}]+', r'color:%s' % textColor, css_str)
